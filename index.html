@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Appointment Assistant | Diallo IA demo</title>
+<meta name="description" content="Interactive demo: an AI assistant books appointments on WhatsApp, sends reminders and keeps the owner's schedule up to date.">
+<style>
+:root{--g:#00a884;--gd:#008069;--bg:#eef1f4;--card:#fff;--tx:#1f2933;--mu:#64748b;--bd:#e2e8f0;--chat:#efeae2;--me:#d9fdd3;--warn:#f59e0b;--red:#dc2626;--blue:#2563eb}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{background:#0f172a;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0}
+header p{margin:2px 0 0;font-size:13px;color:#cbd5e1}
+.lang button{background:transparent;color:#fff;border:1px solid #475569;padding:6px 10px;border-radius:6px;cursor:pointer;font-weight:600}
+.lang button.on{background:#fff;color:#0f172a}
+main{max-width:1200px;margin:0 auto;padding:18px 16px;display:grid;grid-template-columns:380px 1fr;gap:18px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+main>*,header>div{min-width:0}
+@media(max-width:600px){header h1{font-size:16px}.phone{height:620px}}
+.tip{grid-column:1/-1;background:#fff7e6;border:1px solid #fde3a7;border-radius:10px;padding:10px 14px;font-size:14px}
+/* phone */
+.phone{background:#111;border-radius:28px;padding:10px;box-shadow:0 10px 30px #0003;height:720px;display:flex;flex-direction:column}
+.wa-top{background:var(--gd);color:#fff;border-radius:20px 20px 0 0;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.av{width:36px;height:36px;border-radius:50%;background:#fff;color:var(--gd);display:flex;align-items:center;justify-content:center;font-weight:700}
+.wa-top b{display:block;font-size:15px}.wa-top small{font-size:12px;opacity:.85}
+.chat{flex:1;background:var(--chat);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px}
+.msg{max-width:85%;padding:7px 9px 16px;border-radius:8px;font-size:14px;line-height:1.35;position:relative;white-space:pre-line;box-shadow:0 1px 1px #0001}
+.msg.bot{background:#fff;align-self:flex-start}
+.msg.me{background:var(--me);align-self:flex-end}
+.msg .t{position:absolute;right:7px;bottom:2px;font-size:10px;color:var(--mu)}
+.msg.sys{align-self:center;background:#fff3c4;font-size:12px;padding:5px 9px;max-width:95%}
+.qr{display:flex;flex-wrap:wrap;gap:6px;align-self:flex-start;margin:2px 0 4px}
+.qr button{background:#fff;color:var(--gd);border:1px solid #bfe9de;border-radius:16px;padding:6px 11px;font-size:13px;cursor:pointer;font-weight:600}
+.qr button:hover{background:#e7f8f3}
+.typing{align-self:flex-start;background:#fff;border-radius:8px;padding:8px 12px;font-size:13px;color:var(--mu)}
+.wa-in{background:#f0f2f5;border-radius:0 0 20px 20px;padding:8px;display:flex;gap:6px}
+.wa-in input{flex:1;border:0;border-radius:18px;padding:9px 12px;font-size:14px;outline:none}
+.wa-in button{background:var(--g);color:#fff;border:0;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px}
+/* dashboard */
+.dash{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--card);border-radius:12px;padding:14px 16px;box-shadow:0 1px 3px #0001}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:600px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:#f8fafc;border:1px solid var(--bd);border-radius:10px;padding:10px}
+.kpi small{color:var(--mu);font-size:12px}.kpi b{display:block;font-size:22px;margin-top:2px}
+.days{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:600px){.days{grid-template-columns:1fr}}
+.day h3{font-size:13px;margin:0 0 6px;color:var(--mu);text-transform:uppercase;letter-spacing:.03em}
+.slot{display:flex;justify-content:space-between;align-items:center;gap:6px;border:1px solid var(--bd);border-radius:8px;padding:6px 8px;margin-bottom:5px;font-size:13px;background:#fff}
+.slot.free{color:#94a3b8;border-style:dashed}
+.slot.new{animation:flash 2.5s ease-out;border-color:var(--g)}
+@keyframes flash{0%{background:#c9f5e8}100%{background:#fff}}
+.chip{font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.c-book{background:#dbeafe;color:#1e40af}.c-conf{background:#dcfce7;color:#166534}.c-rem{background:#fef3c7;color:#92400e}.c-cxl{background:#fee2e2;color:#991b1b}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:0;border-radius:8px;padding:9px 13px;font-weight:600;cursor:pointer;font-size:13px}
+.btn.p{background:var(--g);color:#fff}.btn.s{background:#e2e8f0;color:var(--tx)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.log{font-size:13px;max-height:170px;overflow-y:auto}
+.log div{padding:5px 0;border-bottom:1px solid #f1f5f9}
+.log time{color:var(--mu);margin-right:6px}
+.report{white-space:pre-line;font-size:13px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;display:none;margin-top:10px}
+footer{text-align:center;color:var(--mu);font-size:12px;padding:6px 16px 24px}
+footer a{color:var(--gd)}
+</style>
+</head>
+<body>
+<header>
+  <div><h1 id="hTitle"></h1><p id="hSub"></p></div>
+  <div class="lang"><button data-l="en">EN</button> <button data-l="fr">FR</button></div>
+</header>
+<main>
+  <div class="tip" id="tip"></div>
+  <section>
+    <div class="phone">
+      <div class="wa-top"><div class="av" id="avatar"></div><div><b id="bizName"></b><small id="online"></small></div></div>
+      <div class="chat" id="chat"></div>
+      <form class="wa-in" id="form"><input id="inp" autocomplete="off"><button aria-label="send">&#10148;</button></form>
+    </div>
+  </section>
+  <section class="dash">
+    <div class="card"><h2 id="kTitle"></h2><div class="kpis" id="kpis"></div></div>
+    <div class="card"><h2><span id="sTitle"></span><span class="btns"><button class="btn p" id="bRem"></button><button class="btn s" id="bRep"></button><button class="btn s" id="bReset"></button></span></h2><div class="days" id="days"></div><div class="report" id="report"></div></div>
+    <div class="card"><h2 id="lTitle"></h2><div class="log" id="log"></div></div>
+  </section>
+</main>
+<footer id="foot"></footer>
+<script>
+const P=new URLSearchParams(location.search);
+const BIZ=P.get("n")||({clinique:"City Care Clinic",beaute:"Glow Beauty Institute"}[(P.get("k")||"").toLowerCase()]||"Bright Smile Dental Clinic");
+let L=(P.get("lang")||(P.get("pays")?"fr":"en"))==="fr"?"fr":"en";
+const KIND=(P.get("k")||"dentaire").toLowerCase();
+const PAYS=(P.get("pays")||"").toLowerCase();
+const CUR=L==="en"&&!PAYS?"usd":(PAYS==="gn"?"gnf":"xof");
+const SERV={
+ dentaire:{en:["Check-up","Teeth cleaning","Whitening"],fr:["Consultation","Détartrage","Blanchiment"],min:["30 min","45 min","60 min"],usd:[40,60,150],xof:[15000,25000,60000],gnf:[150000,250000,600000]},
+ clinique:{en:["General consultation","Specialist consultation","Blood test"],fr:["Consultation générale","Consultation spécialiste","Analyses de sang"],min:["20 min","30 min","15 min"],usd:[30,60,25],xof:[10000,20000,15000],gnf:[100000,250000,150000]},
+ beaute:{en:["Facial treatment","Manicure & pedicure","Massage"],fr:["Soin du visage","Manucure et pédicure","Massage"],min:["60 min","45 min","60 min"],usd:[35,25,45],xof:[15000,10000,20000],gnf:[200000,150000,300000]}
+};
+function money(n){const c=L==="en"&&!PAYS?"usd":(PAYS==="gn"?"gnf":"xof");if(c==="usd")return "$"+n;return n.toLocaleString("fr-FR").replace(/\u202f|\u00a0/g," ")+(c==="gnf"?" GNF":" F CFA")}
+function SV(){const s=SERV[KIND]||SERV.dentaire;return s[L].map((n,i)=>[n,s.min[i],money((L==="en"&&!PAYS?s.usd:(PAYS==="gn"?s.gnf:s.xof))[i])])}
+function priceText(){return (L==="en"?"Our prices:":"Nos tarifs :")+"\n"+SV().map(s=>"• "+s[0]+" : "+s[2]).join("\n")}
+
+const T={
+en:{title:"AI Appointment Assistant",sub:"Live demo: customers book on WhatsApp, the owner sees everything",tip:"<b>Try it:</b> book an appointment in the WhatsApp chat on the left, then click <b>Send tomorrow's reminders</b>. You can also type a question like <i>price</i> or <i>opening hours</i>.",online:"online · replies instantly",ph:"Type a message",
+k:"This week",kB:"Bookings",kR:"Reminders sent",kC:"Confirmed",kN:"No-show rate",s:"Schedule",rem:"Send tomorrow's reminders",rep:"Evening report",reset:"Reset demo",l:"Activity log",free:"free",
+st:{book:"Booked",conf:"Confirmed",rem:"Reminder sent",cxl:"Cancelled"},
+services:[["Check-up","30 min","$40"],["Teeth cleaning","45 min","$60"],["Whitening","60 min","$150"]],
+hi:"Hi, I'd like to book an appointment",
+welcome:n=>`Hello and welcome to ${n}. I can book your appointment in less than a minute.\nWhich service do you need?`,
+day:"Great choice. Which day suits you?",slot:d=>`Here are the free times on ${d}:`,full:"Sorry, this day is full. Please pick another day.",
+name:"Perfect. What is your name?",useName:"Sarah K.",
+recap:(s,d,h,n)=>`Please check your booking:\n• ${s}\n• ${d} at ${h}\n• Name: ${n}\nShall I confirm it?`,yes:"Confirm",change:"Change time",
+done:(d,h)=>`Your appointment is confirmed for ${d} at ${h}. You will get a reminder the day before. See you soon!`,
+remMsg:(d,h,s)=>`Reminder: you have an appointment tomorrow, ${d} at ${h} (${s}).\nPlease confirm you are coming.`,
+rYes:"I'll be there",rMove:"Reschedule",rCancel:"Cancel",
+rYesA:"Thank you, see you tomorrow!",rCancelA:"Your appointment is cancelled. The time has been offered to the waiting list. You can book again anytime.",
+moveA:"No problem. Pick a new day:",
+price:"Our prices:\n• Check-up: $40\n• Teeth cleaning: $60\n• Whitening: $150",hours:"We are open Monday to Saturday, 8:00 to 18:00.",
+other:"Good question. I am passing it to our team, someone will reply here shortly.",
+noRem:"No appointment tomorrow yet. Book one for tomorrow in the chat, then send the reminders.",
+again:"Book another appointment",
+logBook:(n,s,d,h)=>`New booking: ${n}, ${s}, ${d} ${h}`,logRem:n=>`Reminders sent for tomorrow: ${n}`,logConf:n=>`${n} confirmed`,logCxl:n=>`${n} cancelled, slot offered to waiting list`,logMove:n=>`${n} is rescheduling`,logQ:q=>`Question passed to the team: "${q}"`,
+report:(b,c,r,f)=>`Evening report sent to the owner's phone:\n\nToday's activity\n• New bookings: ${b}\n• Confirmed for tomorrow: ${c}\n• Reminders sent: ${r}\n• Free slots tomorrow: ${f}\n\nNo action needed. Have a good evening.`,
+foot:`Interactive demo built by <a href="https://thierno-diallo-ia.netlify.app">Diallo IA</a>. In production the same flow runs on the real WhatsApp Business number, with n8n and an AI model, and the schedule syncs with Google Calendar or Google Sheets. Data here stays in your browser.`,
+days:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],today:"Today",tomorrow:"Tomorrow"},
+fr:{title:"Assistant IA de prise de rendez-vous",sub:"Démo en direct : les clients réservent sur WhatsApp, le patron voit tout",tip:"<b>Essayez :</b> prenez un rendez-vous dans la conversation WhatsApp à gauche, puis cliquez sur <b>Envoyer les rappels de demain</b>. Vous pouvez aussi écrire une question comme <i>prix</i> ou <i>horaires</i>.",online:"en ligne · répond tout de suite",ph:"Écrire un message",
+k:"Cette semaine",kB:"Rendez-vous",kR:"Rappels envoyés",kC:"Confirmés",kN:"Taux d'absence",s:"Planning",rem:"Envoyer les rappels de demain",rep:"Rapport du soir",reset:"Recommencer",l:"Journal",free:"libre",
+st:{book:"Réservé",conf:"Confirmé",rem:"Rappel envoyé",cxl:"Annulé"},
+services:[["Consultation","30 min","15 000 F"],["Détartrage","45 min","25 000 F"],["Blanchiment","60 min","60 000 F"]],
+hi:"Bonjour, je voudrais prendre rendez-vous",
+welcome:n=>`Bonjour et bienvenue chez ${n}. Je peux réserver votre rendez-vous en moins d'une minute.\nDe quel service avez-vous besoin ?`,
+day:"Très bien. Quel jour vous arrange ?",slot:d=>`Voici les heures libres ${d} :`,full:"Désolé, ce jour est complet. Choisissez un autre jour.",
+name:"Parfait. Quel est votre nom ?",useName:"Aïcha K.",
+recap:(s,d,h,n)=>`Vérifiez votre rendez-vous :\n• ${s}\n• ${d} à ${h}\n• Nom : ${n}\nJe confirme ?`,yes:"Confirmer",change:"Changer l'heure",
+done:(d,h)=>`Votre rendez-vous est confirmé ${d} à ${h}. Vous recevrez un rappel la veille. À bientôt !`,
+remMsg:(d,h,s)=>`Rappel : vous avez rendez-vous demain, ${d} à ${h} (${s}).\nMerci de confirmer votre venue.`,
+rYes:"Je serai là",rMove:"Déplacer",rCancel:"Annuler",
+rYesA:"Merci, à demain !",rCancelA:"Votre rendez-vous est annulé. L'heure a été proposée à la liste d'attente. Vous pouvez reprendre rendez-vous quand vous voulez.",
+moveA:"Pas de souci. Choisissez un nouveau jour :",
+price:"Nos tarifs :\n• Consultation : 15 000 F\n• Détartrage : 25 000 F\n• Blanchiment : 60 000 F",hours:"Nous sommes ouverts du lundi au samedi, de 8h à 18h.",
+other:"Bonne question. Je la transmets à l'équipe, quelqu'un vous répond ici très vite.",
+noRem:"Pas encore de rendez-vous demain. Réservez-en un pour demain dans la conversation, puis envoyez les rappels.",
+again:"Prendre un autre rendez-vous",
+logBook:(n,s,d,h)=>`Nouveau rendez-vous : ${n}, ${s}, ${d} ${h}`,logRem:n=>`Rappels envoyés pour demain : ${n}`,logConf:n=>`${n} a confirmé`,logCxl:n=>`${n} a annulé, heure proposée à la liste d'attente`,logMove:n=>`${n} déplace son rendez-vous`,logQ:q=>`Question transmise à l'équipe : « ${q} »`,
+report:(b,c,r,f)=>`Rapport du soir envoyé sur le téléphone du patron :\n\nActivité du jour\n• Nouveaux rendez-vous : ${b}\n• Confirmés pour demain : ${c}\n• Rappels envoyés : ${r}\n• Heures libres demain : ${f}\n\nRien à faire. Bonne soirée.`,
+foot:`Démo interactive réalisée par <a href="https://thierno-diallo-ia.netlify.app">Diallo IA</a>. En vrai, le même parcours tourne sur votre numéro WhatsApp Business, avec n8n et un modèle d'IA, et le planning se synchronise avec Google Agenda ou Google Sheets. Les données restent dans votre navigateur.`,
+days:["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"],today:"Aujourd'hui",tomorrow:"Demain"}};
+const HOURS=["09:00","10:00","11:00","14:00","15:00","16:00"];
+const SEED=[["Daniel O.",0,0,"10:00","conf"],["Fatou B.",1,0,"09:00","book"],["Marc T.",1,1,"11:00","book"],["Linda A.",1,2,"15:00","book"],["Yao K.",2,0,"10:00","book"],["Grace M.",2,1,"14:00","book"],["Ibrahim S.",2,0,"16:00","book"]];
+let S;
+function days3(){const out=[],d=new Date();d.setHours(12);while(out.length<3){if(d.getDay()!==0)out.push(new Date(d));d.setDate(d.getDate()+1)}return out}
+const DAYS=days3();
+function dLabel(i){const t=T[L],d=DAYS[i];const rel=i===0&&isToday(d)?t.today:(isTomorrow(d)?t.tomorrow:t.days[d.getDay()]);return `${rel} ${d.getDate()}/${d.getMonth()+1}`}
+const FULL={en:["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],fr:["dimanche","lundi","mardi","mercredi","jeudi","vendredi","samedi"]};
+function dTxt(i){const d=DAYS[i];return `${FULL[L][d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`}
+function isToday(d){const n=new Date();return d.toDateString()===n.toDateString()}
+function isTomorrow(d){const n=new Date();n.setDate(n.getDate()+1);return d.toDateString()===n.toDateString()}
+function tomorrowIdx(){return isToday(DAYS[0])?1:0}
+function fresh(){return{appts:SEED.map((a,i)=>({id:i,name:a[0],day:a[1],svc:a[2],h:a[3],st:a[4]})),log:[],kp:{b:7,r:0,c:1},flow:{},me:null,newId:null,todayBooks:0}}
+function load(){try{const s=JSON.parse(localStorage.getItem("rdvDemo")||"null");if(s&&s.appts)return s}catch(e){}return fresh()}
+function save(){try{localStorage.setItem("rdvDemo",JSON.stringify(S))}catch(e){}}
+const $=id=>document.getElementById(id);
+const chat=$("chat");
+function now(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")}
+function add(cls,text){const m=document.createElement("div");m.className="msg "+cls;m.textContent=text;if(cls!=="sys"){const t=document.createElement("span");t.className="t";t.textContent=now();m.append(t)}chat.append(m);chat.scrollTop=chat.scrollHeight}
+function qr(list){clearQr();const w=document.createElement("div");w.className="qr";list.forEach(([lab,fn])=>{const b=document.createElement("button");b.type="button";b.textContent=lab;b.onclick=()=>{clearQr();add("me",lab);fn()};w.append(b)});chat.append(w);chat.scrollTop=chat.scrollHeight}
+function clearQr(){chat.querySelectorAll(".qr").forEach(x=>x.remove())}
+function bot(text,then){const ty=document.createElement("div");ty.className="typing";ty.textContent="...";chat.append(ty);chat.scrollTop=chat.scrollHeight;setTimeout(()=>{ty.remove();add("bot",text);then&&then()},650)}
+function log(t){S.log.unshift([now(),t]);save();render()}
+function svcName(i){return SV()[i][0]}
+function taken(day,h){return S.appts.some(a=>a.day===day&&a.h===h&&a.st!=="cxl")}
+function startFlow(){S.flow={};bot(T[L].welcome(BIZ),askService)}
+function askService(){qr(SV().map((s,i)=>[`${s[0]} · ${s[1]} · ${s[2]}`,()=>{S.flow.svc=i;bot(T[L].day,askDay)}]))}
+function askDay(){qr(DAYS.map((d,i)=>[dLabel(i),()=>{S.flow.day=i;askSlot()}]))}
+function askSlot(){const f=S.flow,free=HOURS.filter(h=>!taken(f.day,h));if(!free.length){bot(T[L].full,askDay);return}bot(T[L].slot(dTxt(f.day)),()=>qr(free.map(h=>[h,()=>{f.h=h;if(S.flow.moving){finishMove()}else{bot(T[L].name,askName)}}])))}
+function askName(){S.flow.waitName=true;qr([[T[L].useName,()=>{S.flow.waitName=false;S.flow.name=T[L].useName;recap()}]]);$("inp").focus()}
+function recap(){const f=S.flow;bot(T[L].recap(svcName(f.svc),dTxt(f.day),f.h,f.name),()=>qr([[T[L].yes,confirmBook],[T[L].change,()=>{bot(T[L].day,askDay)}]]))}
+function confirmBook(){const f=S.flow,id=Date.now();S.appts.push({id,name:f.name,day:f.day,svc:f.svc,h:f.h,st:"book",mine:true});S.me=id;S.newId=id;S.kp.b++;S.todayBooks++;log(T[L].logBook(f.name,svcName(f.svc),dLabel(f.day),f.h));bot(T[L].done(dTxt(f.day),f.h),()=>qr([[T[L].again,startFlow]]));S.flow={};save();render()}
+function sendReminders(){const ti=tomorrowIdx();const list=S.appts.filter(a=>a.day===ti&&a.st==="book");if(!list.length){add("sys",T[L].noRem);return}list.forEach(a=>{a.st="rem"});S.kp.r+=list.length;log(T[L].logRem(list.length));const mine=list.find(a=>a.id===S.me);if(mine){bot(T[L].remMsg(dTxt(mine.day),mine.h,svcName(mine.svc)),()=>qr([[T[L].rYes,()=>{mine.st="conf";S.kp.c++;log(T[L].logConf(mine.name));bot(T[L].rYesA)}],[T[L].rMove,()=>{log(T[L].logMove(mine.name));mine.st="cxl";S.flow={moving:true,svc:mine.svc,name:mine.name};save();render();bot(T[L].moveA,askDay)}],[T[L].rCancel,()=>{mine.st="cxl";log(T[L].logCxl(mine.name));bot(T[L].rCancelA,()=>qr([[T[L].again,startFlow]]))}]]))}
+ // auto-confirm a few seeded customers to make the board come alive
+ setTimeout(()=>{list.filter(a=>!a.mine).slice(0,2).forEach(a=>{a.st="conf";S.kp.c++;log(T[L].logConf(a.name))})},1600);save();render()}
+function finishMove(){const f=S.flow,id=Date.now();S.appts.push({id,name:f.name,day:f.day,svc:f.svc,h:f.h,st:"book",mine:true});S.me=id;S.newId=id;log(T[L].logBook(f.name,svcName(f.svc),dLabel(f.day),f.h));bot(T[L].done(dTxt(f.day),f.h),()=>qr([[T[L].again,startFlow]]));S.flow={};save();render()}
+function freeText(q){const t=q.toLowerCase();if(S.flow.waitName){S.flow.waitName=false;S.flow.name=q.slice(0,30);clearQr();recap();return}
+ if(/price|cost|how much|prix|tarif|combien/.test(t)){bot(priceText(),()=>qr([[T[L].again,startFlow]]))}
+ else if(/hour|open|horaire|ouvert|heure/.test(t)){bot(T[L].hours)}
+ else if(/book|appointment|rendez|rdv|réserv|reserv/.test(t)){startFlow()}
+ else if(/^(hi|hello|bonjour|salut|hey)/.test(t)){startFlow()}
+ else{log(T[L].logQ(q.slice(0,60)));bot(T[L].other)}}
+function render(){const t=T[L];document.documentElement.lang=L;
+ $("hTitle").textContent=t.title+" · "+BIZ;$("hSub").textContent=t.sub;$("tip").innerHTML=t.tip;$("online").textContent=t.online;$("inp").placeholder=t.ph;$("bizName").textContent=BIZ;$("avatar").textContent=BIZ.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+ $("kTitle").textContent=t.k;$("sTitle").textContent=t.s;$("bRem").textContent=t.rem;$("bRep").textContent=t.rep;$("bReset").textContent=t.reset;$("lTitle").textContent=t.l;$("foot").innerHTML=t.foot;
+ document.querySelectorAll(".lang button").forEach(b=>b.classList.toggle("on",b.dataset.l===L));
+ const live=S.appts.filter(a=>a.st!=="cxl").length,cx=S.appts.filter(a=>a.st==="cxl").length;
+ $("kpis").innerHTML=[[t.kB,live],[t.kR,S.kp.r],[t.kC,S.appts.filter(a=>a.st==="conf").length],[t.kN,(S.kp.r?"3%":"12%")]].map(([a,b])=>`<div class="kpi"><small>${a}</small><b>${b}</b></div>`).join("");
+ $("days").innerHTML=DAYS.map((d,i)=>`<div class="day"><h3>${dLabel(i)}</h3>`+HOURS.map(h=>{const a=S.appts.find(x=>x.day===i&&x.h===h&&x.st!=="cxl");if(!a)return `<div class="slot free"><span>${h}</span><span>${t.free}</span></div>`;const c={book:"c-book",conf:"c-conf",rem:"c-rem",cxl:"c-cxl"}[a.st];return `<div class="slot${a.id===S.newId?" new":""}"><span><b>${h}</b> ${esc(a.name)}<br><small style="color:#64748b">${svcName(a.svc)}</small></span><span class="chip ${c}">${t.st[a.st]}</span></div>`}).join("")+`</div>`).join("");
+ $("log").innerHTML=S.log.length?S.log.map(([h,x])=>`<div><time>${h}</time>${esc(x)}</div>`).join(""):`<div style="color:#94a3b8">—</div>`;
+ S.newId=null}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function report(){const t=T[L],ti=tomorrowIdx();const conf=S.appts.filter(a=>a.day===ti&&a.st==="conf").length;const free=HOURS.filter(h=>!taken(ti,h)).length;const r=$("report");r.textContent=t.report(S.todayBooks,conf,S.kp.r,free);r.style.display="block";r.scrollIntoView({behavior:"smooth",block:"nearest"})}
+function boot(){chat.innerHTML="";$("report").style.display="none";render();setTimeout(()=>{add("me",T[L].hi);startFlow()},400)}
+$("form").onsubmit=e=>{e.preventDefault();const v=$("inp").value.trim();if(!v)return;$("inp").value="";clearQr();add("me",v);freeText(v)};
+$("bRem").onclick=sendReminders;$("bRep").onclick=report;$("bReset").onclick=()=>{S=fresh();save();boot()};
+document.querySelectorAll(".lang button").forEach(b=>b.onclick=()=>{L=b.dataset.l;S.flow={};save();boot()});
+S=load();S.flow={};boot();
+</script>
+</body>
+</html>
